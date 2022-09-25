@@ -1,0 +1,92 @@
+---
+- name: set up bash for user
+  hosts: all
+  become: no
+  tasks:
+    - name: change user shell to bash
+      become: yes
+      user:
+        name: "vagrant"
+        shell: /bin/bash
+
+    - name: enable copy paste guest/host
+      become: true
+      ansible.builtin.apt:
+        name: spice-vdagent
+        state: present
+
+    - name: Make sure spice-vdagentd is running
+      become: true
+      ansible.builtin.systemd:
+        state: started
+        name: spice-vdagentd
+
+    - name: Install basic packages
+      become: true
+      ansible.builtin.apt:
+        name:
+        - exa
+        - ncdu
+        - htop
+        - jq
+        - i3
+        - arandr
+        - xcape
+        - hstr
+        - feh
+        state: present
+
+    - name: Copy dotfiles
+      copy:
+        src: "{{ item }}"
+        dest: "/home/{{ ansible_ssh_user }}/{{ item }}"
+      with_items:
+        - .bashrc
+        - .dircolors
+
+    - name: Install and configure neovim
+      block:
+        - name: Download neovim
+          become: true
+          ansible.builtin.get_url:
+            url: https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
+            dest: /usr/local/bin/nvim
+            mode: '0775'
+
+        - name: Make sure nvim config dir exists
+          file:
+            path: "/home/{{ ansible_ssh_user }}/{{ item }}"
+            state: directory
+          loop:
+            - ".config/nvim"
+            - ".config/nvim/autoload"
+
+        - name: Download config
+          ansible.builtin.get_url:
+            url:  https://raw.githubusercontent.com/ttauveron/vimrc/master/{{ item }}
+            dest: /home/{{ ansible_ssh_user }}/.config/nvim/{{ item }}
+            mode: '0664'
+          with_items:
+            - init.vim
+            - autoload/plug.vim
+
+        - name: Install nvim plugins
+          shell: nvim +PlugInstall +qall
+    #endblock
+
+    - name: Make sure i3 config dir exists
+      file:
+        path: "/home/{{ ansible_ssh_user }}/{{ item }}"
+        state: directory
+      loop:
+        - ".config/i3"
+    - name: Copy i3 config
+      copy:
+        src: "{{ item }}"
+        dest: "/home/{{ ansible_ssh_user }}/{{ item }}"
+      with_items:
+        - .config/i3/config
+
+#   - name: debug
+#     debug:
+#       msg: "{{ ansible_ssh_user }}"
