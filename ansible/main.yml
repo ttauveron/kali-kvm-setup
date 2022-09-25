@@ -1,15 +1,15 @@
 ---
-- name: set up bash for user
+- name: Install my stack
   hosts: all
   become: no
   tasks:
     - name: change user shell to bash
       become: yes
       user:
-        name: "vagrant"
+        name: "{{ ansible_ssh_user }}"
         shell: /bin/bash
 
-    - name: enable copy paste guest/host
+    - name: Install spice-vdagent - Enable copy paste guest/host
       become: true
       ansible.builtin.apt:
         name: spice-vdagent
@@ -34,6 +34,8 @@
         - xcape
         - hstr
         - feh
+        - moreutils
+        - docker.io
         state: present
 
     - name: Copy dotfiles
@@ -87,6 +89,33 @@
       with_items:
         - .config/i3/config
 
+    - name: Enable docker in systemd
+      become: true
+      ansible.builtin.systemd:
+        enabled: yes
+        state: started
+        name: docker
+
+    - name: Add user to docker group
+      become: true
+      user:
+        name: "{{ ansible_ssh_user }}"
+        groups: "docker"
+        append: yes
+
+    - name: Make home bin dir exists
+      file:
+        path: "/home/{{ ansible_ssh_user }}/bin"
+        state: directory
+
+    - name: Copy binaries
+      copy:
+        src: "{{ item }}"
+        dest: "/home/{{ ansible_ssh_user }}/{{ item }}"
+        mode: '0770'
+      with_items:
+        - bin/java-decompiler
+        - bin/yq
 #   - name: debug
 #     debug:
 #       msg: "{{ ansible_ssh_user }}"
