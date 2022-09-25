@@ -179,5 +179,5 @@ exec --no-startup-id feh --bg-scale /usr/share/backgrounds/kali/kali-layers-16x9
 exec --no-startup-id nm-applet --sm-disable
 exec setxkbmap -option 'caps:ctrl_modifier'
 exec xcape -e 'Caps_Lock=Escape'
-
+exec setxkbmap -layout us -variant intl
 bindsym --release Print exec "xfce4-screenshooter"
