@@ -71,9 +71,11 @@
           with_items:
             - init.vim
             - autoload/plug.vim
+          register: nvimconfig
 
         - name: Install nvim plugins
           shell: nvim +PlugInstall +qall
+          when: nvimconfig.changed
     #endblock
 
     - name: Make sure i3 config dir exists
