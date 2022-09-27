@@ -29,6 +29,7 @@
         - ncdu
         - htop
         - jq
+        - xclip
         - i3
         - arandr
         - xcape
